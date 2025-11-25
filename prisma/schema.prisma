@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+  previewFeatures = ["tracing"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+enum FileStatus {
+  PENDING     // O upload foi registrado, aguardando processamento.
+  PROCESSING  // Um worker pegou o arquivo e está processando.
+  PROCESSED   // Processamento concluído com sucesso.
+  FAILED      // Processamento falhou após todas as tentativas.
+}
+
+// Representa um único arquivo e seu estado.
+model File {
+
+  id String @id @default(uuid())
+
+  name String
+
+  // Chave/caminho único do arquivo no storage (MinIO/S3).
+  storageKey String @unique @map("storage_key")
+
+  status FileStatus @default(PENDING)
+
+  // Tipo MIME do arquivo (ex: "image/png", "application/pdf").
+  mimeType String @map("mime_type")
+
+  // Tamanho do arquivo em bytes. BigInt para suportar arquivos muito grandes.
+  sizeInBytes BigInt @map("size_in_bytes")
+
+  // Hash (ex: SHA-256) do conteúdo do arquivo para verificação de integridade.
+  hash String?
+
+  // Campo JSON para armazenar metadados extraídos de forma flexível
+  // (ex: { "width": 1920, "height": 1080 } ou { "pages": 12 }).
+  metadata Json?
+
+  // Motivo da falha, caso ocorra. Ajuda na depuração.
+  failureReason String? @map("failure_reason")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Timestamp de quando o processamento foi concluído com sucesso.
+  processedAt DateTime? @map("processed_at")
+
+  logs ProcessingLog[]
+
+  @@map("files") 
+}
+
+/// Modelo para registrar o histórico de eventos de um arquivo.
+model ProcessingLog {
+  id String @id @default(uuid())
+
+  // Mensagem descritiva do evento (ex: "Iniciando processamento", "Falha ao extrair metadados").
+  message String
+
+  // Detalhes técnicos, como um stack trace de erro, em formato JSON.
+  details Json?
+
+  // Timestamp de quando o log foi criado.
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relação com o arquivo: este log pertence a um único arquivo.
+  file   File   @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  fileId String @map("file_id")
+
+  // Adiciona um índice na coluna fileId para otimizar consultas de logs de um arquivo.
+  @@index([fileId])
+  @@map("processing_logs")
+}

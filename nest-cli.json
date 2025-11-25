@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/syncflow/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/syncflow/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/syncflow",
+  "projects": {
+    "syncflow": {
+      "type": "application",
+      "root": "apps/syncflow",
+      "entryFile": "main",
+      "sourceRoot": "apps/syncflow/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/syncflow/tsconfig.app.json"
+      }
+    },
+    "upload-service": {
+      "type": "application",
+      "root": "apps/upload-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/upload-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/upload-service/tsconfig.app.json"
+      }
+    },
+    "processing-service": {
+      "type": "application",
+      "root": "apps/processing-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/processing-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/processing-service/tsconfig.app.json"
+      }
+    },
+    "notification-service": {
+      "type": "application",
+      "root": "apps/notification-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/notification-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/notification-service/tsconfig.app.json"
+      }
+    },
+    "metadata-api": {
+      "type": "application",
+      "root": "apps/metadata-api",
+      "entryFile": "main",
+      "sourceRoot": "apps/metadata-api/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/metadata-api/tsconfig.app.json"
+      }
+    }
+  }
+}
