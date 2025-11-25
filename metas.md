@@ -68,3 +68,6 @@
 | 6 | Dockerizar Apps NestJS             | `apps/*/Dockerfile`                 | Preparar para orquestração em Kubernetes.       |
 | 7 | Criar Manifestos Kubernetes        | `k8s/` ou `infra/`                  | Definir deploy, services, ingress, HPA.         |
 | 8 | Construir Pipeline CI/CD           | `.github/workflows/ci.yml`          | Automatizar build, teste e deploy.              |
+
+**Checkpoint da Fase 3:**
+- [ ] Nesse ponto, deverá ser possível analisar todo o sistema em relação aos seus logs e entre outros dados.
