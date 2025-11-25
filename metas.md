@@ -1,7 +1,3 @@
-Aqui está todo o conteúdo perfeitamente formatado em **Markdown profissional**, organizado em tabelas e seções claras:
-
----
-
 # **Fase 1: A Fundação – O Esqueleto do Sistema**
 
 **Objetivo:** Ter a infraestrutura básica rodando e um primeiro fluxo mínimo funcionando: requisitar um upload e registrar o arquivo no banco.
