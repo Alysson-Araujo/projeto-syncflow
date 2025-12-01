@@ -1,7 +1,3 @@
-Aqui está todo o conteúdo perfeitamente formatado em **Markdown profissional**, organizado em tabelas e seções claras:
-
----
-
 # **Fase 1: A Fundação – O Esqueleto do Sistema**
 
 **Objetivo:** Ter a infraestrutura básica rodando e um primeiro fluxo mínimo funcionando: requisitar um upload e registrar o arquivo no banco.
@@ -17,7 +13,7 @@ Aqui está todo o conteúdo perfeitamente formatado em **Markdown profissional**
 | 7 | Publicar o Evento `file.uploaded`                | `apps/upload-service/`                                                  | Iniciar a comunicação assíncrona avisando que um novo arquivo está a caminho.                                    |
 
 **Checkpoint da Fase 1:**
-Você deve conseguir iniciar tudo com `docker-compose up`, fazer uma requisição para a API, receber uma URL de upload e ver um novo registro com status **PENDING** na tabela `files`.
+- [ ] Deve ser possível iniciar tudo com `docker-compose up`, fazer uma requisição para a API, receber uma URL de upload e ver um novo registro com status **PENDING** na tabela `files`.
 
 ---
 
@@ -36,7 +32,7 @@ Você deve conseguir iniciar tudo com `docker-compose up`, fazer uma requisiçã
 | 7 | Implementar Retries e DLQ                   | Configuração do RabbitMQ                                       | Aumentar a resiliência e evitar perda de mensagens.                                 |
 
 **Checkpoint da Fase 2:**
-Após o fluxo da Fase 1, o Processing Service deve processar o arquivo, atualizar seu status para **PROCESSED** e salvar os metadados extraídos.
+- [ ] Após o fluxo da Fase 1, o Processing Service deve processar o arquivo, atualizar seu status para **PROCESSED** e salvar os metadados extraídos.
 
 ---
 
@@ -54,7 +50,7 @@ Após o fluxo da Fase 1, o Processing Service deve processar o arquivo, atualiza
 | 6 | Configurar Gateway WebSocket      | `apps/notification-service/src/notification.gateway.ts`            | Enviar atualizações em tempo real para o frontend.                   |
 
 **Checkpoint da Fase 3:**
-Você pode consultar arquivos via API e clientes WebSocket recebem uma notificação quando um arquivo é processado.
+- [ ] pode consultar arquivos via API e clientes WebSocket recebem uma notificação quando um arquivo é processado.
 
 ---
 
@@ -73,6 +69,5 @@ Você pode consultar arquivos via API e clientes WebSocket recebem uma notifica�
 | 7 | Criar Manifestos Kubernetes        | `k8s/` ou `infra/`                  | Definir deploy, services, ingress, HPA.         |
 | 8 | Construir Pipeline CI/CD           | `.github/workflows/ci.yml`          | Automatizar build, teste e deploy.              |
 
----
-
-Se quiser, posso transformar isso em um **PDF**, **README.md**, ou até **um arquivo pronto para adicionar no seu repositório**.
+**Checkpoint da Fase 3:**
+- [ ] Nesse ponto, deverá ser possível analisar todo o sistema em relação aos seus logs e entre outros dados.
