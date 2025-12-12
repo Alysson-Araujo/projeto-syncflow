@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { StorageService } from './storage/storage.service';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { CreateUploadDto } from './dtos/get-presigned-url.dto';
+import { UploadService } from './upload-service.service';
 
 @Controller()
 export class UploadServiceController {
-  constructor(private readonly storageService: StorageService 
+  constructor(private readonly storageService: UploadService 
   ) {}
 
   @Get()
@@ -17,7 +17,12 @@ export class UploadServiceController {
     const bucket = 'syncflow';
     const key = 'testes/';
     
-    const url = await this.storageService.getPresignedUploadUrl(bucket, key);
+    const url = await this.storageService.createUpload(body);
     return { url };
+  }
+
+  @Post('upload/:id/complete')
+  async completeUpload(@Param('id') id: string) {
+    return await this.storageService.completeUpload(id);
   }
 }

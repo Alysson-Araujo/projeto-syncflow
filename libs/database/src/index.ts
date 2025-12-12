@@ -1,7 +1,11 @@
-export * from './database.module';
-export * from './database.service';
+export * from './lib/database.module';
+export * from './lib/database.service';
 
-import { File } from '../src/entities/file.entity';
-import { ProcessingLog } from '../src/entities/processing-log.entity';
+export * from './lib/entities/file.entity';
+export * from './lib/entities/processing-log.entity';
+
+
+import { File } from './lib/entities/file.entity';
+import { ProcessingLog } from './lib/entities/processing-log.entity';
 
 export const ALL_ENTITIES = [File, ProcessingLog];
