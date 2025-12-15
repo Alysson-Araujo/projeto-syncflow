@@ -2,6 +2,14 @@ version: '3.8'
 
 services:
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: syncflow-mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - syncflow-network
   postgres:
     image: postgres:15
     container_name: syncflow-postgres

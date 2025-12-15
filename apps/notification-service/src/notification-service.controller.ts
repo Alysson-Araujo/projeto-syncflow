@@ -1,12 +1,24 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Logger } from '@nestjs/common';
 import { NotificationServiceService } from './notification-service.service';
 
 @Controller()
 export class NotificationServiceController {
-  constructor(private readonly notificationServiceService: NotificationServiceService) {}
+  private readonly logger = new Logger(NotificationServiceController.name);
+
+  constructor(private readonly notificationService: NotificationServiceService) {}
 
   @Get()
-  getHello(): string {
-    return this.notificationServiceService.getHello();
+  getStatus() {
+    this.logger.log('Health check requested');
+    return {
+      service: 'notification-service',
+      status: 'running',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  @Get('/stats')
+  getStats() {
+    return this.notificationService.getStats();
   }
 }
