@@ -7,6 +7,7 @@ import {
   GetObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Readable } from 'stream';
 
 @Injectable()
 export class StorageService {
@@ -122,4 +123,27 @@ export class StorageService {
 
     return getSignedUrl(this.s3Client, command, { expiresIn });
   }
+  /**
+ * Obter stream de um objeto
+ */
+async getObjectStream(key: string): Promise<Readable> {
+  try {
+    const result = await this.s3Client.send(
+      new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      })
+    );
+
+    if (!result.Body) {
+      throw new Error('Object body is empty');
+    }
+
+    // result.Body é um ReadableStream, converter para Node.js Readable
+    return result.Body as Readable;
+  } catch (error:  any) {
+    this.logger.error(`Failed to get object stream ${key}: ${error.message}`);
+    throw error;
+  }
+}
 }

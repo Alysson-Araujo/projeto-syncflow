@@ -5,7 +5,7 @@ import { DatabaseModule, File } from '@app/database';  // ← Importar de @app/d
 import { StorageModule } from '@app/storage';
 import { UploadServiceController } from './upload-service.controller';
 import { UploadService } from './upload-service.service';
-import { RabbitMQModule } from '@app/messaging';
+import { RabbitMQModule, EventPublisherService  } from '@app/messaging';
 
 @Module({
   imports: [
@@ -16,6 +16,6 @@ import { RabbitMQModule } from '@app/messaging';
     RabbitMQModule.forRootAsync(),
   ],
   controllers: [UploadServiceController],
-  providers: [UploadService],
+  providers: [UploadService, EventPublisherService ],
 })
 export class UploadServiceModule {}

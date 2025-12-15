@@ -43,7 +43,7 @@ export class File {
   @Property({ fieldName: 'size_in_bytes', type: 'bigint', nullable: true })
   sizeInBytes?: number;
 
-  @Property({ nullable: true })
+  @Property({ type: 'varchar', length: 64, nullable: true })
   hash?: string;
 
   @Property({ type: 'jsonb', nullable: true })
@@ -52,7 +52,7 @@ export class File {
   @Property({ fieldName: 'failure_reason', nullable: true })
   failureReason?: string;
 
-    @Property({ fieldName: 'created_at' })  // ← Adicionar fieldName
+  @Property({ fieldName: 'created_at' })  // ← Adicionar fieldName
   createdAt:  Date = new Date();
 
   @Property({ fieldName: 'updated_at', onUpdate: () => new Date() })  // ← Adicionar fieldName

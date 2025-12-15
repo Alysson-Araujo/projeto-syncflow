@@ -1,0 +1,67 @@
+{
+  "name": "processing-service",
+  "$schema":  "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/processing-service/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/processing-service",
+        "main": "apps/processing-service/src/main.ts",
+        "tsConfig":  "apps/processing-service/tsconfig.app.json",
+        "assets": ["apps/processing-service/src/assets"],
+        "isolatedConfig": true,
+        "webpackConfig": "apps/processing-service/webpack.config.js",
+        "generatePackageJson": true
+      },
+      "configurations": {
+        "development": {
+          "optimization":  false,
+          "sourceMap":  true
+        },
+        "production": {
+          "optimization": true,
+          "sourceMap": false,
+          "extractLicenses": true,
+          "inspect":  false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "processing-service:build"
+      },
+      "configurations":  {
+        "development": {
+          "buildTarget": "processing-service:build:development"
+        },
+        "production": {
+          "buildTarget": "processing-service:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint: lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/processing-service/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/processing-service/jest. config.ts",
+        "passWithNoTests": true
+      }
+    }
+  }
+}

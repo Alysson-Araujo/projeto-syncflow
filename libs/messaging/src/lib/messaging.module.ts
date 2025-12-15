@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RabbitMQService } from './messaging.service';
 import { RabbitMQSetupService } from './rabbitmq-setup.service';
 import { RabbitMQModuleOptions } from './interfaces/rabbitmq-options.interface';
+import { EventPublisherService } from './event-publisher.service';
 
 @Global()
 @Module({})
@@ -35,8 +36,9 @@ export class RabbitMQModule {
         },
         RabbitMQService,
         RabbitMQSetupService,
+        EventPublisherService,
       ],
-      exports: [RabbitMQService, ClientsModule],
+      exports: [RabbitMQService, ClientsModule, EventPublisherService],
     };
   }
 

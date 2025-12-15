@@ -3,7 +3,7 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityManager, EntityRepository } from '@mikro-orm/core';
 import { File, FileStatus } from '@app/database';
 import { StorageService } from '@app/storage';
-import { RabbitMQService } from '@app/messaging';
+import { EventPublisherService, RabbitMQService } from '@app/messaging';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateUploadDto } from './dtos/get-presigned-url.dto';
 
@@ -16,7 +16,7 @@ export class UploadService {
     @InjectRepository(File)
     private readonly fileRepository: EntityRepository<File>,
     private readonly em: EntityManager,
-    private readonly rabbitMQService: RabbitMQService,
+     private readonly eventPublisher: EventPublisherService,
   ) {}
 
   async createUpload(data: CreateUploadDto) {
@@ -72,7 +72,7 @@ export class UploadService {
       );
 
       // 3. 🔥 PUBLICAR EVENTO NO RABBITMQ
-      await this. rabbitMQService.emit('file.uploaded', {
+      await this.eventPublisher.publish('file.uploaded', {
         fileId: file.id,
         storageKey: file.storageKey,
         name: file.name,
