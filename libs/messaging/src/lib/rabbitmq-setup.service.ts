@@ -45,7 +45,7 @@ export class RabbitMQSetupService implements OnModuleInit {
             'x-dead-letter-routing-key': config.name,
           },
         });
-        this.logger.log(`✅ Queue created: ${config. name}`);
+        this.logger.log(`✅ Queue created: ${config.name}`);
 
 
         await channel.bindQueue(
@@ -53,7 +53,7 @@ export class RabbitMQSetupService implements OnModuleInit {
           'syncflow.events',
           config.routingKey
         );
-        this.logger. log(
+        this.logger.log(
           `✅ Binding created: ${config.name} <- syncflow.events (${config.routingKey})`
         );
       }

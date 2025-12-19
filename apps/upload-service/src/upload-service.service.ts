@@ -70,7 +70,7 @@ export class UploadService {
   // Log para debug
   this.logger.debug(`📋 File data: ${JSON.stringify({
     id: file.id,
-    storageKey: file. storageKey,
+    storageKey: file.storageKey,
     name:  file.name,
     status: file.status
   })}`);
@@ -78,7 +78,7 @@ export class UploadService {
   // Validar arquivo no S3
   this.logger.log(`🔍 Validating file in S3: ${file.storageKey}`);
   
-  const exists = await this.storageService.fileExists(file. storageKey);
+  const exists = await this.storageService.fileExists(file.storageKey);
 
   if (!exists) {
     throw new NotFoundException(
@@ -90,7 +90,7 @@ export class UploadService {
 
   // Atualizar status
   file.status = FileStatus.PROCESSING;
-  file.sizeInBytes = metadata. ContentLength || file.sizeInBytes;
+  file.sizeInBytes = metadata.ContentLength || file.sizeInBytes;
   await this.em.flush();
   
   // ✅ Atualizar cache após mudança de status
@@ -98,19 +98,19 @@ export class UploadService {
 
   this.logger.log(
     `✅ Upload completed: ${file.id} - ${file.name} (${this.formatBytes(
-      file. sizeInBytes || 0
+      file.sizeInBytes || 0
     )})`
   );
 
   // Publicar evento
-  await this. eventPublisher.publish('file. uploaded', {
+  await this.eventPublisher.publish('file.uploaded', {
     fileId:  file.id,
     storageKey: file.storageKey,
     name: file.name,
-    mimeType: file. mimeType,
+    mimeType: file.mimeType,
     size:  file.sizeInBytes,
     createdAt: file.createdAt.toISOString(),
-  });
+  }, );
 
   return {
     id: file.id,
@@ -124,7 +124,7 @@ export class UploadService {
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math. pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
   private async cacheFile(file: File): Promise<void> {

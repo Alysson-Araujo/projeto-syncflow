@@ -81,7 +81,7 @@ export class EventPublisherService implements OnModuleInit, OnModuleDestroy {
   }
 
 async publish<T = any>(
-  routingKey:  string,
+  routingKey: string,
   data: T,
   options?:  {
     exchange?: string;
@@ -92,42 +92,35 @@ async publish<T = any>(
     throw new Error('RabbitMQ channel is not initialized');
   }
 
-  const exchange = options?.exchange || 'syncflow.events';
-  const persistent = options?.persistent ??  true;
-
+  const persistent = options?.persistent ?? true;
 
   const message = {
-    pattern: routingKey,  
-    data,                 
+    pattern: routingKey,
+    data,
   };
 
   const content = Buffer.from(JSON.stringify(message));
 
   try {
-    const published = this.channel.publish(
-      exchange,
-      routingKey,
+    // ✅ MUDAR: Publicar DIRETO na queue em vez do exchange
+    const published = this.channel.sendToQueue(
+      routingKey,  // Nome da queue
       content,
       {
         persistent,
         contentType: 'application/json',
-        timestamp:  Date.now(),
+        timestamp: Date.now(),
       }
     );
 
     if (published) {
-      this.logger.log(
-        `📤 Event published: ${routingKey} → ${exchange}`
-      );
+      this.logger.log(`📤 Event sent to queue: ${routingKey}`);
     } else {
-      this.logger.warn(`⚠️ Failed to publish event: ${routingKey}`);
+      this.logger.warn(`⚠️ Failed to send to queue: ${routingKey}`);
     }
   } catch (error:  any) {
-    this.logger.error(`❌ Error publishing event ${routingKey}: ${error.message}`);
+    this.logger.error(`❌ Error sending to queue ${routingKey}:  ${error.message}`);
     throw error;
   }
 }
-  private generateId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
 }

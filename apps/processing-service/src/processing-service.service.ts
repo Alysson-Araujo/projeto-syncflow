@@ -7,6 +7,7 @@ import { EventPublisherService } from '@app/messaging';
 import { RedisCacheService, RedisLockService } from '@app/redis';
 import { createHash } from 'crypto';
 import { Readable } from 'stream';
+import { MediaProcessorFactory } from 'media-processor';
 
 @Injectable()
 export class ProcessingServiceService {
@@ -26,13 +27,14 @@ export class ProcessingServiceService {
     private readonly eventPublisher:  EventPublisherService,
     private readonly lockService: RedisLockService,
     private readonly cacheService: RedisCacheService,
+    private readonly mediaProcessorFactory: MediaProcessorFactory, 
   ) {}
 
   async processFile(fileId: string): Promise<void> {
     const lockAcquired = await this.lockService.acquire(`file:${fileId}`, 300);
     
     if (!lockAcquired) {
-      this.logger. warn(`⚠️  File ${fileId} is already being processed. Skipping...`);
+      this.logger.warn(`⚠️ File ${fileId} is already being processed.Skipping...`);
       return;
     }
 
@@ -50,18 +52,53 @@ export class ProcessingServiceService {
       }
 
       if (file.status === FileStatus.COMPLETED) {
-        this.logger.warn(`⚠️  File ${fileId} already processed. Skipping...`);
+        this.logger.warn(`⚠️ File ${fileId} already processed.Skipping...`);
         return;
       }
 
+      // 1.Download e calcular hash (sempre)
       this.logger.log(`📥 Downloading from S3: ${file.storageKey}`);
-      const stream = await this. storageService.getObjectStream(file.storageKey);
+      const stream = await this.storageService.getObjectStream(file.storageKey);
 
-      this.logger.log(`🔐 Calculating SHA256 hash... `);
+      this.logger.log(`🔐 Calculating SHA256 hash...`);
       const hash = await this.calculateHash(stream);
       
+      // 2.Extrair metadados básicos
       const metadata = await this.extractMetadata(file);
 
+      // 3.Processar mídia específica (se suportado)
+      let processingResult = null;
+      
+      if (this.mediaProcessorFactory.canProcess(file.mimeType)) {
+        this.logger.log(`🎨 Media processor available for ${file.mimeType}`);
+        
+        const processor = this.mediaProcessorFactory.getProcessor(file.mimeType);
+        
+        if (processor) {
+          processingResult = await processor.process(fileId, file.storageKey, file.mimeType);
+          
+          if (processingResult.success) {
+            this.logger.log(`✅ Media processing completed`);
+            
+            // Adicionar metadados de mídia
+            if (processingResult.metadata) {
+              metadata.image = processingResult.metadata;
+            }
+            
+            // Adicionar thumbnails
+            if (processingResult.thumbnails) {
+              file.thumbnails = processingResult.thumbnails;
+              this.logger.log(`📸 Generated ${processingResult.thumbnails.length} thumbnails`);
+            }
+          } else {
+            this.logger.warn(`⚠️ Media processing failed:  ${processingResult.error}`);
+          }
+        }
+      } else {
+        this.logger.debug(`ℹ️ No media processor for ${file.mimeType}`);
+      }
+
+      // 4.Atualizar arquivo
       file.hash = hash;
       file.metadata = metadata;
       file.markAsCompleted();
@@ -73,13 +110,18 @@ export class ProcessingServiceService {
       this.logger.log(`✅ File processed successfully: ${fileId}`);
       this.logger.log(`   Hash: ${hash}`);
       this.logger.log(`   Status: ${file.status}`);
+      if (file.hasThumbnails()) {
+        this.logger.log(`   Thumbnails: ${file.thumbnails?.length}`);
+      }
 
+      // 5.Publicar evento
       await this.eventPublisher.publish('file.processed', {
         fileId:  file.id,
         storageKey: file.storageKey,
         name: file.name,
         hash,
         metadata,
+        thumbnails: file.thumbnails,
         processedAt: new Date().toISOString(),
       });
 
@@ -95,9 +137,9 @@ export class ProcessingServiceService {
         await em.flush();
       }
 
-      await this.eventPublisher. publish('file.failed', {
+      await this.eventPublisher.publish('file.failed', {
         fileId,
-        storageKey: file?. storageKey,
+        storageKey: file?.storageKey,
         name: file?.name,
         error: error.message,
         failedAt: new Date().toISOString(),
@@ -126,7 +168,7 @@ export class ProcessingServiceService {
     const metadata: Record<string, any> = {
       name: file.name,
       mimeType: file.mimeType,
-      size: file. sizeInBytes,
+      size: file.sizeInBytes,
       uploadedAt: file.createdAt.toISOString(),
     };
 
@@ -137,14 +179,14 @@ export class ProcessingServiceService {
     const uptime = Date.now() - this.stats.startTime.getTime();
     
     return {
-      processed: this. stats.processed,
+      processed: this.stats.processed,
       failed: this.stats.failed,
       uptime:  Math.floor(uptime / 1000),
       startTime: this.stats.startTime,
     };
   }
   async getFile(fileId: string): Promise<File | null> {
-    // 1. Tentar buscar no cache
+    // 1.Tentar buscar no cache
     const cacheKey = `file:${fileId}`;
     const cached = await this.cacheService.get<File>(cacheKey);
 
@@ -153,7 +195,7 @@ export class ProcessingServiceService {
       return cached;
     }
 
-    // 2. Cache MISS → Buscar no banco
+    // 2.Cache MISS → Buscar no banco
     this.logger.debug(`🔍 Cache MISS: ${fileId} - Querying database`);
     const file = await this.em.findOne(File, { id: fileId });
 
@@ -161,8 +203,8 @@ export class ProcessingServiceService {
       return null;
     }
 
-    // 3. Se o arquivo está COMPLETED, cachear
-    if (file.status === FileStatus. COMPLETED) {
+    // 3.Se o arquivo está COMPLETED, cachear
+    if (file.status === FileStatus.COMPLETED) {
       await this.cacheFile(file);
     }
 
@@ -173,14 +215,15 @@ export class ProcessingServiceService {
     
     // Serializar apenas os dados necessários
     const cacheData = {
-      id: file. id,
-      name: file. name,
+      id: file.id,
+      name: file.name,
       storageKey:  file.storageKey,
       mimeType: file.mimeType,
       sizeInBytes: file.sizeInBytes,
       status: file.status,
       hash: file.hash,
       metadata: file.metadata,
+      thumbnails: file.thumbnails,
       createdAt: file.createdAt,
       processedAt: file.processedAt,
     };

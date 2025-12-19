@@ -13,10 +13,7 @@ export class UploadServiceController {
   }
 
   @Post('upload')
-  async getPresignedUrl(@Body() body: CreateUploadDto) {
-    const bucket = 'syncflow';
-    const key = 'testes/';
-    
+  async getPresignedUrl(@Body() body: CreateUploadDto) {    
     const url = await this.storageService.createUpload(body);
     return { url };
   }

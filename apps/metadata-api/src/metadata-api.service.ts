@@ -37,16 +37,16 @@ export class MetadataApiService {
 
     // Ordenação
     const orderBy:  any = {};
-    if (dto. sortBy === 'createdAt') {
+    if (dto.sortBy === 'createdAt') {
       orderBy.createdAt = dto.order;
-    } else if (dto. sortBy === 'name') {
+    } else if (dto.sortBy === 'name') {
       orderBy.name = dto.order;
     } else if (dto.sortBy === 'size') {
       orderBy.sizeInBytes = dto.order;
     }
 
     // Buscar no banco
-    const [files, total] = await this. em.findAndCount(
+    const [files, total] = await this.em.findAndCount(
       File,
       where,
       {
@@ -61,7 +61,7 @@ export class MetadataApiService {
     this.logger.log(`✅ Found ${files.length} files (total: ${total})`);
 
     return {
-      data: files. map((file) => this.mapToDto(file)),
+      data: files.map((file) => this.mapToDto(file)),
       total,
       limit: dto.limit! ,
       offset: dto.offset!,
@@ -75,16 +75,16 @@ export class MetadataApiService {
   async getFileById(fileId: string): Promise<FileResponseDto> {
     this.logger.log(`🔍 Getting file: ${fileId}`);
 
-    // 1. Tentar buscar no cache
+    // 1.Tentar buscar no cache
     const cacheKey = `file:${fileId}`;
-    const cached = await this.cacheService. get<File>(cacheKey);
+    const cached = await this.cacheService.get<File>(cacheKey);
 
     if (cached) {
       this.logger.debug(`💾 Cache HIT:  ${fileId}`);
       return this.mapToDto(cached as any);
     }
 
-    // 2. Cache MISS → Buscar no banco
+    // 2.Cache MISS → Buscar no banco
     this.logger.debug(`🔍 Cache MISS: ${fileId}`);
     const file = await this.em.findOne(File, { id: fileId });
 
@@ -92,8 +92,8 @@ export class MetadataApiService {
       throw new NotFoundException(`File ${fileId} not found`);
     }
 
-    // 3. Cachear se estiver COMPLETED
-    if (file.status === FileStatus. COMPLETED) {
+    // 3.Cachear se estiver COMPLETED
+    if (file.status === FileStatus.COMPLETED) {
       await this.cacheFile(file);
     }
 
@@ -109,7 +109,7 @@ async getFileStatus(fileId: string): Promise<{
   processedAt?: Date;
   failureReason?: string;  // ✅ MUDOU de errorMessage para failureReason
 }> {
-  this.logger. log(`📊 Getting status for file: ${fileId}`);
+  this.logger.log(`📊 Getting status for file: ${fileId}`);
 
   const file = await this.getFileById(fileId);
 
@@ -128,7 +128,7 @@ async getFileStatus(fileId: string): Promise<{
 
     const file = await this.getFileById(fileId);
 
-    if (file.status !== FileStatus. COMPLETED) {
+    if (file.status !== FileStatus.COMPLETED) {
       throw new NotFoundException(
         `File ${fileId} is not ready for download (status: ${file.status})`
       );
@@ -162,7 +162,7 @@ async getStats(): Promise<{
 
   // Tentar buscar do cache
   const cacheKey = 'stats:general';
-  const cached = await this.cacheService. get<any>(cacheKey);
+  const cached = await this.cacheService.get<any>(cacheKey);
 
   if (cached) {
     this.logger.debug(`💾 Stats cache HIT`);
@@ -201,7 +201,7 @@ async getStats(): Promise<{
   };
 
   // Cachear stats por 5 minutos
-  await this. cacheService.set(cacheKey, stats, 300);
+  await this.cacheService.set(cacheKey, stats, 300);
 
   return stats;
 }
@@ -213,8 +213,8 @@ async getStats(): Promise<{
     const cacheKey = `file:${file.id}`;
 
     const cacheData = {
-      id: file. id,
-      name: file. name,
+      id: file.id,
+      name: file.name,
       storageKey:  file.storageKey,
       mimeType: file.mimeType,
       sizeInBytes: file.sizeInBytes,
@@ -247,7 +247,7 @@ private mapToDto(file: File | any): FileResponseDto {
     createdAt: file.createdAt,
     updatedAt: file.updatedAt,
     processedAt: file.processedAt,
-    failureReason: file. failureReason,  // ✅ CORRIGIDO
+    failureReason: file.failureReason,  // ✅ CORRIGIDO
   };
 }
 }

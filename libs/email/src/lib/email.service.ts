@@ -26,7 +26,7 @@ export class EmailService {
   const pass = this.configService.get<string>('SMTP_PASS');
 
   // MailHog não usa TLS/SSL - conexão simples SMTP
-  this.transporter = nodemailer. createTransport({
+  this.transporter = nodemailer.createTransport({
     host,
     port,
     secure:  false,  

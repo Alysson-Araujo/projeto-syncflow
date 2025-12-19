@@ -5,23 +5,22 @@ import {
   OneToMany, 
   Collection, 
   Enum, 
-  BigIntType,
   OptionalProps
 } from '@mikro-orm/core';
 import { ProcessingLog } from './processing-log.entity';
 
 export enum FileStatus {
-    PENDING = 'PENDING',
-    PROCESSING = 'PROCESSING',
-    COMPLETED = 'COMPLETED',
-    FAILED = 'FAILED',
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
 }
 
 @Entity({ tableName: 'files' })
 export class File {
   [OptionalProps]?: 'id' | 'status' | 'createdAt' | 'updatedAt' | 'logs'; 
 
-    constructor(init?: Partial<File>) {
+  constructor(init?: Partial<File>) {
     Object.assign(this, init);
   }
 
@@ -29,7 +28,7 @@ export class File {
   id: string = Math.random().toString(36).substring(2, 15);
 
   @Property()
-  name!: string;
+  name! : string;
 
   @Property({ fieldName: 'storage_key', unique: true })
   storageKey!: string;
@@ -49,11 +48,21 @@ export class File {
   @Property({ type: 'jsonb', nullable: true })
   metadata?: Record<string, any>;
 
+  // ✅ ADICIONAR:  Campo para thumbnails
+  @Property({ type: 'jsonb', nullable: true })
+  thumbnails?: Array<{
+    size: string;
+    width: number;
+    height: number;
+    storageKey: string;
+    url?:  string;
+  }>;
+
   @Property({ fieldName: 'failure_reason', nullable: true })
   failureReason?: string;
 
   @Property({ fieldName: 'created_at' })
-  createdAt:  Date = new Date();
+  createdAt: Date = new Date();
 
   @Property({ fieldName: 'updated_at', onUpdate: () => new Date() })
   updatedAt: Date = new Date();
@@ -64,21 +73,18 @@ export class File {
   @OneToMany(() => ProcessingLog, log => log.file)
   logs = new Collection<ProcessingLog>(this);
 
-
-
-
   markAsProcessing(): void {
-    if (this.status !== FileStatus. PENDING) {
+    if (this.status !== FileStatus.PENDING) {
       throw new Error(`Cannot process file with status:  ${this.status}`);
     }
     this.status = FileStatus.PROCESSING;
   }
 
-  markAsCompleted(hash?: string, metadata?: Record<string, any>): void {
+  markAsCompleted(hash?:  string, metadata?: Record<string, any>): void {
     if (this.status !== FileStatus.PROCESSING) {
       throw new Error(`File must be PROCESSING to mark as COMPLETED`);
     }
-    this.status = FileStatus. COMPLETED;
+    this.status = FileStatus.COMPLETED;
     this.processedAt = new Date();
     if (hash) {
       this.hash = hash;
@@ -88,7 +94,7 @@ export class File {
     }
   }
 
-  markAsFailed(reason: string): void {
+  markAsFailed(reason:  string): void {
     this.status = FileStatus.FAILED;
     this.failureReason = reason;
   }
@@ -101,7 +107,7 @@ export class File {
   }
 
   canBeProcessed(): boolean {
-    return this.status === FileStatus. PENDING && !!this.sizeInBytes;
+    return this.status === FileStatus.PENDING && !!this.sizeInBytes;
   }
 
   isCompleted(): boolean {
@@ -109,11 +115,11 @@ export class File {
   }
 
   hasFailed(): boolean {
-    return this.status === FileStatus. FAILED;
+    return this.status === FileStatus.FAILED;
   }
 
   getFormattedSize(): string {
-    if (!this.sizeInBytes) return '0 B';
+    if (! this.sizeInBytes) return '0 B';
     
     const units = ['B', 'KB', 'MB', 'GB', 'TB'];
     let size = this.sizeInBytes;
@@ -128,10 +134,21 @@ export class File {
   }
 
   isImage(): boolean {
-    return this.mimeType?. startsWith('image/') ??  false;
+    return this.mimeType?.startsWith('image/') ??  false;
   }
 
   isVideo(): boolean {
     return this.mimeType?.startsWith('video/') ?? false;
+  }
+
+  // ✅ ADICIONAR:  Helper para thumbnails
+  hasThumbnails(): boolean {
+    return !!this.thumbnails && this.thumbnails.length > 0;
+  }
+
+  getThumbnail(size: 'small' | 'medium' | 'large'): string | null {
+    if (!this.thumbnails) return null;
+    const thumbnail = this.thumbnails.find(t => t.size === size);
+    return thumbnail?.storageKey || null;
   }
 }

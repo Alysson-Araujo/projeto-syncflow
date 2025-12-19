@@ -35,10 +35,10 @@ async function bootstrap() {
     .addTag('stats', 'Estatísticas do sistema')
     .build();
 
-  const document = SwaggerModule. createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = process.env. METADATA_API_PORT || 3001;
+  const port = process.env.METADATA_API_PORT || 3001;
   await app.listen(port);
 
   logger.log(`🚀 Metadata API is running on:  http://localhost:${port}/api`);

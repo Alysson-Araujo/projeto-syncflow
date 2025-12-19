@@ -66,16 +66,22 @@ export class FileProcessor implements OnModuleInit {
       return;
     }
 
-    const content = msg. content.toString();
+    
+    const content = msg.content.toString();
 
+    // ✅ LOG 1: Conteúdo recebido
+  this.logger.log(`📦 Raw content received (length: ${content.length})`);
+  this.logger.debug(`📦 Raw content: ${content}`);
     this.logger.debug(`📦 Raw content: ${content}`);
 
     let parsed: MessageWrapper | FileUploadedData;
-
+    
     try {
       parsed = JSON.parse(content);
+        // ✅ LOG 2: Conteúdo parseado
+    this.logger.debug(`📦 Parsed: ${JSON.stringify(parsed, null, 2)}`);
     } catch (error) {
-      this.logger. error(`❌ Invalid JSON: ${content}`);
+      this.logger.error(`❌ Invalid JSON: ${content}`);
       this.channel.nack(msg, false, false);
       return;
     }
@@ -83,11 +89,18 @@ export class FileProcessor implements OnModuleInit {
     let data: FileUploadedData;
 
     if ('data' in parsed && parsed.data) {
+      // ✅ LOG 3: Formato com data
+    this.logger.debug(`📋 Format:  Wrapped (pattern + data)`);
       data = parsed.data;
     } else if ('fileId' in parsed) {
+      // ✅ LOG 4: Formato direto
+    this.logger.debug(`📋 Format: Direct`);
       data = parsed as FileUploadedData;
     } else {
-      this. logger.error(`❌ Invalid message structure: ${content}`);
+      // ✅ LOG 5: Formato inválido
+    this.logger.error(`   Keys found: ${Object.keys(parsed).join(', ')}`);
+    this.logger.error(`   Full content: ${JSON.stringify(parsed, null, 2)}`);
+      this.logger.error(`❌ Invalid message structure: ${content}`);
       this.channel.nack(msg, false, false);
       return;
     }
@@ -98,7 +111,7 @@ export class FileProcessor implements OnModuleInit {
       return;
     }
 
-    this.logger.log(`📨 Received file. uploaded event`);
+    this.logger.log(`📨 Received file.uploaded event`);
     this.logger.log(`   File ID: ${data.fileId}`);
     this.logger.log(`   File Name: ${data.name}`);
 

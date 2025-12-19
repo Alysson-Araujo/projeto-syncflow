@@ -120,7 +120,7 @@ export class StorageService {
         Key: key,
       });
 
-      const response = await this. s3Client.send(command);
+      const response = await this.s3Client.send(command);
 
       this.logger.debug(`📋 Metadata retrieved for: ${key}`);
 
@@ -131,7 +131,27 @@ export class StorageService {
         ETag:  response.ETag,
       };
     } catch (error: any) {
-      this.logger. error(`Error getting metadata for ${key}: ${error.message}`);
+      this.logger.error(`Error getting metadata for ${key}: ${error.message}`);
+      throw error;
+    }
+  }
+  async uploadBuffer(
+    key: string,
+    buffer: Buffer,
+    contentType = 'application/octet-stream'
+  ): Promise<void> {
+    try {
+      const command = new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: buffer,
+        ContentType:  contentType,
+      });
+
+      await this.s3Client.send(command);
+      this.logger.debug(`✅ Buffer uploaded to S3: ${key}`);
+    } catch (error: any) {
+      this.logger.error(`❌ Failed to upload buffer to S3: ${error.message}`);
       throw error;
     }
   }
