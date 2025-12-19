@@ -35,7 +35,7 @@ export class FileNotificationProcessor {
     const channel = context.getChannelRef();
     const originalMsg = context.getMessage();
 
-    // Pegar conteúdo raw
+
     const content = originalMsg.content.toString();
 
     this.logger.debug(`📦 Raw content: ${content}`);
@@ -50,7 +50,7 @@ export class FileNotificationProcessor {
       return;
     }
 
-    // Extrair data
+
     let data: FileProcessedData;
 
     if ('data' in parsed && parsed.data) {
@@ -63,7 +63,7 @@ export class FileNotificationProcessor {
       return;
     }
 
-    // Validar campos obrigatórios
+
     if (!data.fileId || !data.name) {
       this.logger.error(`❌ Missing required fields in message: ${JSON.stringify(parsed)}`);
       channel.nack(originalMsg, false, false);

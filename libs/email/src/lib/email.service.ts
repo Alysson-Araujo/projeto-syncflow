@@ -25,15 +25,15 @@ export class EmailService {
   const user = this.configService.get<string>('SMTP_USER');
   const pass = this.configService.get<string>('SMTP_PASS');
 
-  // 🔥 MailHog não usa TLS/SSL - conexão simples SMTP
+  // MailHog não usa TLS/SSL - conexão simples SMTP
   this.transporter = nodemailer. createTransport({
     host,
     port,
-    secure:  false,  // NÃO usar SSL/TLS
-    ignoreTLS: true,  // Ignorar comandos STARTTLS
-    requireTLS: false,  // Não exigir TLS
+    secure:  false,  
+    ignoreTLS: true,
+    requireTLS: false,
     auth:  user && pass ? { user, pass } : undefined,
-  } as any);  // "as any" para evitar erro de tipos do Nodemailer
+  } as any);
 
   this.logger.log(`📧 Email service initialized (${host}:${port}) - TLS disabled`);
 }

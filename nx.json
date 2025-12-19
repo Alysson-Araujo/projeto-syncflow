@@ -13,7 +13,10 @@
       "options": {
         "targetName": "test"
       },
-      "exclude": ["apps/notification-service-e2e/**/*"]
+      "exclude": [
+        "apps/notification-service-e2e/**/*",
+        "apps/metadata-api-e2e/**/*"
+      ]
     },
     {
       "plugin": "@nx/webpack/plugin",

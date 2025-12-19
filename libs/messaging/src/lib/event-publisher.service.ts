@@ -80,9 +80,6 @@ export class EventPublisherService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  /**
- * Publica um evento no exchange com routing key
- */
 async publish<T = any>(
   routingKey:  string,
   data: T,
@@ -98,10 +95,10 @@ async publish<T = any>(
   const exchange = options?.exchange || 'syncflow.events';
   const persistent = options?.persistent ??  true;
 
-  // Formato compatível com NestJS Microservices @EventPattern
+
   const message = {
-    pattern: routingKey,  // ← NestJS espera "pattern"
-    data,                 // ← Dados diretos
+    pattern: routingKey,  
+    data,                 
   };
 
   const content = Buffer.from(JSON.stringify(message));

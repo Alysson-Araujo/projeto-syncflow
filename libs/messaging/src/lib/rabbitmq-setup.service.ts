@@ -24,13 +24,11 @@ export class RabbitMQSetupService implements OnModuleInit {
       const connection = await connect(url);
       const channel = await connection.createChannel();
 
-      // 1. Criar exchange principal (topic)
       await channel.assertExchange('syncflow.events', 'topic', {
         durable: true,
       });
       this.logger.log('✅ Exchange created: syncflow.events (topic)');
 
-      // 2. Criar queues para eventos específicos
       const queueConfigs = [
         { name: 'file.uploaded', routingKey: 'file.uploaded' },
         { name: 'file.processed', routingKey: 'file.processed' },
@@ -38,18 +36,18 @@ export class RabbitMQSetupService implements OnModuleInit {
       ];
 
       for (const config of queueConfigs) {
-        // Criar queue
+
         await channel.assertQueue(config.name, {
           durable: true,
           arguments: {
-            // Configurar DLQ
+
             'x-dead-letter-exchange':  'syncflow.events.dlq',
             'x-dead-letter-routing-key': config.name,
           },
         });
         this.logger.log(`✅ Queue created: ${config. name}`);
 
-        // Bind queue ao exchange com routing key
+
         await channel.bindQueue(
           config.name,
           'syncflow.events',
@@ -60,13 +58,11 @@ export class RabbitMQSetupService implements OnModuleInit {
         );
       }
 
-      // 3. Criar exchange DLQ
       await channel.assertExchange('syncflow.events.dlq', 'direct', {
         durable: true,
       });
       this.logger.log('✅ DLQ Exchange created: syncflow.events.dlq');
 
-      // 4. Criar queues DLQ
       for (const config of queueConfigs) {
         const dlqName = `${config.name}.dlq`;
         await channel.assertQueue(dlqName, {
@@ -89,7 +85,6 @@ export class RabbitMQSetupService implements OnModuleInit {
       this.logger.error(
         `❌ Failed to setup RabbitMQ infrastructure:  ${error.message}`
       );
-      // Não lançar erro para não travar a aplicação
     }
   }
 }

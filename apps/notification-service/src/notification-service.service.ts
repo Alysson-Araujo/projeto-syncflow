@@ -29,8 +29,6 @@ export class NotificationServiceService {
   async notifyFileProcessed(data: FileProcessedData): Promise<void> {
     this.logger.log(`📧 Sending notification for file: ${data.name}`);
 
-    // TODO: Em produção, buscar email do usuário no banco
-    // Por enquanto, usar email de teste do .env
     const userEmail = process.env.TEST_EMAIL || 'test@example.com';
 
     try {

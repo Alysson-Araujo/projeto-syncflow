@@ -9,7 +9,6 @@ async function bootstrap() {
 
   const app = await NestFactory.create(NotificationServiceModule);
 
-  // Conectar como microservice (consumer RabbitMQ)
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.RMQ,
     options: {

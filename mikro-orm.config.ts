@@ -4,15 +4,14 @@ import { PostgreSqlDriver, defineConfig } from '@mikro-orm/postgresql';
 import { Migrator } from '@mikro-orm/migrations';
 import * as dotenv from 'dotenv';
 
-// Carregar . env para o CLI
+
 dotenv.config();
 
-// Importar entidades
+
 import { ALL_ENTITIES } from './libs/database/src/index';
 
-// ========================================
+
 // CONFIGURAÇÃO PARA NESTJS (com ConfigService)
-// ========================================
 export function getMikroOrmConfig(configService: ConfigService) {
   return {
     entities: ALL_ENTITIES,
@@ -40,9 +39,7 @@ export function getMikroOrmConfig(configService: ConfigService) {
   };
 }
 
-// ========================================
 // CONFIGURAÇÃO PARA CLI (sem ConfigService)
-// ========================================
 export default defineConfig({
   entities: ALL_ENTITIES,
   dbName: process. env.DB_NAME || 'syncflow',
@@ -60,7 +57,7 @@ export default defineConfig({
     transactional:  true,
   },
 
-  extensions: [Migrator],  // ← Necessário para o CLI
+  extensions: [Migrator],
 
   pool: {
     min: 2,

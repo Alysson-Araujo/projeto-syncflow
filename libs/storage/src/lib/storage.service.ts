@@ -3,15 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
   PutObjectCommand,
-  HeadObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,  // ✅ ADICIONAR
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Readable } from 'stream';
 
 @Injectable()
 export class StorageService {
-  private readonly logger = new Logger(StorageService.name);
+   private readonly logger = new Logger(StorageService.name);
   private readonly s3Client: S3Client;
   private readonly bucket: string;
 
@@ -34,16 +34,25 @@ export class StorageService {
         secretAccessKey: this.configService.getOrThrow<string>('AWS_SECRET_ACCESS_KEY'),
       },
     });
-
-    this.logger.log(`StorageService initialized with bucket: ${this.bucket}`);
-    if (endpoint) {
-      this.logger.log(`Using custom endpoint: ${endpoint}`);
-    }
   }
 
-  /**
-   * Gera Presigned URL para upload (PUT)
-   */
+  async generatePresignedPutUrl(
+    key: string,
+    contentType: string,
+    expiresIn = 3600
+  ): Promise<string> {
+    const command = new PutObjectCommand({
+      Bucket:  this.bucket,
+      Key: key,
+      ContentType: contentType,
+    });
+
+    const url = await getSignedUrl(this.s3Client, command, { expiresIn });
+    this.logger.debug(`🔗 Generated presigned PUT URL for: ${key}`);
+
+    return url;
+  }
+
   async getPresignedPutUrl(
     key: string,
     expiresIn: number = 3600,
@@ -60,90 +69,70 @@ export class StorageService {
     return url;
   }
 
-  /**
-   * Verifica se objeto existe e retorna metadados
-   */
-  async statObject(key: string): Promise<{ size: number; etag: string }> {
+  async getObjectStream(key: string): Promise<Readable> {
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    const response = await this.s3Client.send(command);
+
+    if (! response.Body) {
+      throw new Error(`No body returned for key: ${key}`);
+    }
+
+    return response.Body as Readable;
+  }
+
+  // ✅ ADICIONAR ESTE MÉTODO
+  async fileExists(key: string): Promise<boolean> {
     try {
       const command = new HeadObjectCommand({
         Bucket: this.bucket,
         Key: key,
       });
 
-      const response = await this.s3Client. send(command);
-
-      return {
-        size: response.ContentLength || 0,
-        etag:  response.ETag || '',
-      };
+      await this.s3Client.send(command);
+      this.logger.debug(`✅ File exists in S3: ${key}`);
+      return true;
     } catch (error:  any) {
-      if (error.name === 'NotFound') {
-        throw new Error(`Object not found: ${key}`);
+      if (error.name === 'NotFound' || error.$metadata?. httpStatusCode === 404) {
+        this.logger.debug(`❌ File not found in S3: ${key}`);
+        return false;
       }
+      
+      // Outro tipo de erro (permissão, rede, etc.)
+      this.logger.error(`Error checking file existence: ${error.message}`);
       throw error;
     }
   }
 
-  /**
-   * Baixa objeto como Buffer
-   */
-  async getObjectBuffer(key: string): Promise<Buffer> {
+  // ✅ ADICIONAR ESTE MÉTODO
+  async getObjectMetadata(key: string): Promise<{
+    ContentLength?:  number;
+    ContentType?: string;
+    LastModified?: Date;
+    ETag?: string;
+  }> {
     try {
-      const command = new GetObjectCommand({
-        Bucket:  this.bucket,
+      const command = new HeadObjectCommand({
+        Bucket: this.bucket,
         Key: key,
       });
 
-      const response = await this.s3Client.send(command);
+      const response = await this. s3Client.send(command);
 
-      // Converter stream para buffer
-      const chunks:  Uint8Array[] = [];
-      for await (const chunk of response. Body as any) {
-        chunks.push(chunk);
-      }
+      this.logger.debug(`📋 Metadata retrieved for: ${key}`);
 
-      return Buffer.concat(chunks);
+      return {
+        ContentLength:  response.ContentLength,
+        ContentType: response.ContentType,
+        LastModified: response.LastModified,
+        ETag:  response.ETag,
+      };
     } catch (error: any) {
-      this.logger.error(`Failed to get object ${key}: `, error);
+      this.logger. error(`Error getting metadata for ${key}: ${error.message}`);
       throw error;
     }
   }
-
-  /**
-   * Gera Presigned URL para download (GET) - opcional
-   */
-  async getPresignedGetUrl(
-    key: string,
-    expiresIn: number = 3600
-  ): Promise<string> {
-    const command = new GetObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-    });
-
-    return getSignedUrl(this.s3Client, command, { expiresIn });
-  }
-  /**
- * Obter stream de um objeto
- */
-async getObjectStream(key: string): Promise<Readable> {
-  try {
-    const result = await this.s3Client.send(
-      new GetObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-      })
-    );
-
-    if (!result.Body) {
-      throw new Error('Object body is empty');
-    }
-
-    // result.Body é um ReadableStream, converter para Node.js Readable
-    return result.Body as Readable;
-  } catch (error:  any) {
-    this.logger.error(`Failed to get object stream ${key}: ${error.message}`);
-    throw error;
-  }
-}
 }

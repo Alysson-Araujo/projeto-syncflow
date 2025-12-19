@@ -1,10 +1,11 @@
-import { Controller, Logger } from '@nestjs/common';
-import { MessagePattern, Ctx, Payload, RmqContext } from '@nestjs/microservices';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ProcessingServiceService } from '../processing-service.service';
+import * as amqp from 'amqplib';
 
 interface FileUploadedData {
-  fileId:  string;
-  storageKey:  string;
+  fileId: string;
+  storageKey: string;
   name: string;
   mimeType: string;
   size: number;
@@ -12,74 +13,104 @@ interface FileUploadedData {
 }
 
 interface MessageWrapper {
-  pattern?: string;
+  pattern?:  string;
   data?: FileUploadedData;
 }
 
-@Controller()
-export class FileProcessor {
+@Injectable()
+export class FileProcessor implements OnModuleInit {
   private readonly logger = new Logger(FileProcessor.name);
+  private channel: amqp.Channel;
 
-  constructor(private readonly processingService: ProcessingServiceService) {}
+  constructor(
+    private readonly processingService: ProcessingServiceService,
+    private readonly configService: ConfigService,
+  ) {}
 
-  @MessagePattern('file.uploaded')
-  async handleFileUploaded(
-    @Payload() payload: any,
-    @Ctx() context: RmqContext,
-  ) {
-    const channel = context. getChannelRef();
-    const originalMsg = context.getMessage();
-    
-    // Pegar conteúdo raw
-    const content = originalMsg.content.toString();
-    
-    this.logger. debug(`📦 Raw content: ${content}`);
+  async onModuleInit() {
+    await this.connectToRabbitMQ();
+  }
+
+  private async connectToRabbitMQ() {
+    try {
+      const rabbitmqUrl = this.configService.get(
+        'RABBITMQ_URL',
+        'amqp://syncflow:syncflow123@localhost: 5672'
+      );
+
+      this.logger.log(`🔌 Connecting to RabbitMQ:  ${rabbitmqUrl}`);
+
+      const connection = await amqp.connect(rabbitmqUrl);
+      this.channel = await connection.createChannel();
+
+      await this.channel.prefetch(1);
+
+      this.logger.log(`✅ Connected to RabbitMQ`);
+      this.logger.log(`📨 Starting to consume from queue: file.uploaded`);
+
+      await this.channel.consume(
+        'file.uploaded',
+        (msg) => this.handleMessage(msg),
+        { noAck: false }
+      );
+
+      this.logger.log(`✅ Now consuming messages from file.uploaded`);
+    } catch (error:  any) {
+      this.logger.error(`❌ Failed to connect to RabbitMQ:  ${error.message}`);
+      setTimeout(() => this.connectToRabbitMQ(), 5000);
+    }
+  }
+
+  private async handleMessage(msg: amqp.ConsumeMessage | null) {
+    if (!msg) {
+      return;
+    }
+
+    const content = msg. content.toString();
+
+    this.logger.debug(`📦 Raw content: ${content}`);
 
     let parsed: MessageWrapper | FileUploadedData;
 
     try {
       parsed = JSON.parse(content);
     } catch (error) {
-      this.logger.error(`❌ Invalid JSON:  ${content}`);
-      channel.nack(originalMsg, false, false);
+      this.logger. error(`❌ Invalid JSON: ${content}`);
+      this.channel.nack(msg, false, false);
       return;
     }
 
-    // Extrair data (pode estar em . data ou direto no root)
     let data: FileUploadedData;
-    
+
     if ('data' in parsed && parsed.data) {
-      // Formato:  { pattern:  "file.uploaded", data: {... } }
-      data = parsed. data;
+      data = parsed.data;
     } else if ('fileId' in parsed) {
-      // Formato direto: { fileId: ".. .", storageKey: "...", ...  }
       data = parsed as FileUploadedData;
     } else {
-      this.logger. error(`❌ Invalid message structure: ${content}`);
-      channel.nack(originalMsg, false, false);
+      this. logger.error(`❌ Invalid message structure: ${content}`);
+      this.channel.nack(msg, false, false);
       return;
     }
 
-    // Validar campos obrigatórios
     if (!data.fileId) {
       this.logger.error(`❌ Missing fileId in message:  ${JSON.stringify(parsed)}`);
-      channel.nack(originalMsg, false, false);
+      this.channel.nack(msg, false, false);
       return;
     }
 
-    this.logger.log(`📨 Received file.uploaded event`);
+    this.logger.log(`📨 Received file. uploaded event`);
     this.logger.log(`   File ID: ${data.fileId}`);
     this.logger.log(`   File Name: ${data.name}`);
 
     try {
-      await this.processingService.processFile(data. fileId);
+      await this.processingService.processFile(data.fileId);
 
-      channel.ack(originalMsg);
+      this.channel.ack(msg);
       this.logger.log(`✅ Message processed successfully`);
     } catch (error: any) {
-      this.logger.error(`❌ Processing error: ${error. message}`);
+      this.logger.error(`❌ Processing error: ${error.message}`);
 
-      channel.nack(originalMsg, false, false);
+      this.channel.nack(msg, false, false);
       this.logger.log(`❌ Message sent to DLQ`);
     }
   }

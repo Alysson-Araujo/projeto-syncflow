@@ -23,7 +23,8 @@
       "@app/storage": ["libs/storage/src/index.ts"],
       "@app/messaging": ["libs/messaging/src/index.ts"],
       "@app/shared": ["libs/shared/src/index.ts"],
-      "@app/email": ["libs/email/src/index.ts"]
+      "@app/email": ["libs/email/src/index.ts"],
+      "@app/redis": ["libs/redis/src/index.ts"]
     }
   }
 }

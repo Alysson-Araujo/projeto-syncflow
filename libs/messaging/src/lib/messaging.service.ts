@@ -29,12 +29,6 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  /**
-   * Envia uma mensagem e aguarda resposta (RPC pattern)
-   * 
-   * @example
-   * const result = await rabbitMQService.send('process.file', { fileId: '123' });
-   */
   async send<TResult = any, TInput = any>(
     pattern: string,
     data: TInput,
@@ -55,12 +49,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  /**
-   * Emite um evento sem aguardar resposta (Event pattern)
-   * 
-   * @example
-   * await rabbitMQService.emit('file.uploaded', { fileId: '123', name: 'doc.pdf' });
-   */
+
   async emit<TInput = any>(pattern: string, data: TInput): Promise<void> {
     try {
       this.logger.log(`📤 Emitting event: ${pattern}`);
@@ -74,9 +63,6 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  /**
-   * Publica múltiplos eventos em batch
-   */
   async emitBatch<TInput = any>(events: Array<{ pattern: string; data: TInput }>): Promise<void> {
     this.logger.log(`📤 Emitting ${events.length} events in batch`);
 
@@ -92,12 +78,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  /**
-   * Verifica se a conexão está ativa
-   */
   isConnected(): boolean {
-    // ClientProxy não expõe método para verificar conexão diretamente
-    // Esta é uma implementação simplificada
     return !!this.client;
   }
 }

@@ -7,7 +7,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { ProcessingServiceController } from './processing-service.controller';
 import { ProcessingServiceService } from './processing-service.service';
 import { FileProcessor } from './processors/file.processor';
-
+import { RedisModule } from '@app/redis';
 
 @Module({
   imports: [
@@ -16,8 +16,9 @@ import { FileProcessor } from './processors/file.processor';
     MikroOrmModule.forFeature([File]),
     StorageModule,
     RabbitMQModule.forRootAsync(),
+    RedisModule,
   ],
-  controllers: [ProcessingServiceController, FileProcessor],
-  providers: [ProcessingServiceService, EventPublisherService],
+  controllers: [ProcessingServiceController],
+  providers: [ProcessingServiceService, EventPublisherService, FileProcessor],
 })
 export class ProcessingServiceModule {}

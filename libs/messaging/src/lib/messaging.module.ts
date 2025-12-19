@@ -23,7 +23,7 @@ export class RabbitMQModule {
               queueOptions: {
                 durable: options.queueOptions?.durable ??  true,
               },
-              noAck: true,  // ← MUDANÇA: Não exigir ACK para producer
+              noAck: true,
               persistent: true,
             },
           },
@@ -65,7 +65,7 @@ export class RabbitMQModule {
                   queueOptions: {
                     durable:  true,
                   },
-                  noAck: true,  // ← MUDANÇA: Producer não precisa de ACK
+                  noAck: true,
                   persistent: true,
                 },
               };

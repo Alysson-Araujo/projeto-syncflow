@@ -26,7 +26,7 @@ export class File {
   }
 
   @PrimaryKey({ type: 'uuid' })
-  id: string = Math.random().toString(36).substring(2, 15); // Será sobrescrito pelo DB
+  id: string = Math.random().toString(36).substring(2, 15);
 
   @Property()
   name!: string;
@@ -52,10 +52,10 @@ export class File {
   @Property({ fieldName: 'failure_reason', nullable: true })
   failureReason?: string;
 
-  @Property({ fieldName: 'created_at' })  // ← Adicionar fieldName
+  @Property({ fieldName: 'created_at' })
   createdAt:  Date = new Date();
 
-  @Property({ fieldName: 'updated_at', onUpdate: () => new Date() })  // ← Adicionar fieldName
+  @Property({ fieldName: 'updated_at', onUpdate: () => new Date() })
   updatedAt: Date = new Date();
 
   @Property({ fieldName: 'processed_at', nullable: true })
@@ -66,25 +66,14 @@ export class File {
 
 
 
- 
-  // ========================================
-  // MÉTODOS DE NEGÓCIO
-  // ========================================
 
-  /**
-   * Marca o arquivo como em processamento
-   */
   markAsProcessing(): void {
     if (this.status !== FileStatus. PENDING) {
       throw new Error(`Cannot process file with status:  ${this.status}`);
     }
     this.status = FileStatus.PROCESSING;
-    // ❌ NÃO atualizar updatedAt manualmente (MikroORM faz automaticamente)
   }
 
-  /**
-   * Marca o arquivo como processado com sucesso
-   */
   markAsCompleted(hash?: string, metadata?: Record<string, any>): void {
     if (this.status !== FileStatus.PROCESSING) {
       throw new Error(`File must be PROCESSING to mark as COMPLETED`);
@@ -99,17 +88,11 @@ export class File {
     }
   }
 
-  /**
-   * Marca o arquivo como falho
-   */
   markAsFailed(reason: string): void {
     this.status = FileStatus.FAILED;
     this.failureReason = reason;
   }
 
-  /**
-   * Atualiza o tamanho real do arquivo
-   */
   updateSize(sizeInBytes: number): void {
     if (sizeInBytes < 0) {
       throw new Error('File size cannot be negative');
@@ -117,30 +100,18 @@ export class File {
     this.sizeInBytes = sizeInBytes;
   }
 
-  /**
-   * Verifica se o arquivo está pronto para processamento
-   */
   canBeProcessed(): boolean {
     return this.status === FileStatus. PENDING && !!this.sizeInBytes;
   }
 
-  /**
-   * Verifica se o arquivo já foi processado
-   */
   isCompleted(): boolean {
     return this.status === FileStatus.COMPLETED;
   }
 
-  /**
-   * Verifica se o arquivo falhou
-   */
   hasFailed(): boolean {
     return this.status === FileStatus. FAILED;
   }
 
-  /**
-   * Retorna o tamanho formatado (ex: 1.5 MB)
-   */
   getFormattedSize(): string {
     if (!this.sizeInBytes) return '0 B';
     
@@ -156,16 +127,10 @@ export class File {
     return `${size.toFixed(2)} ${units[unitIndex]}`;
   }
 
-  /**
-   * Verifica se o arquivo é uma imagem
-   */
   isImage(): boolean {
     return this.mimeType?. startsWith('image/') ??  false;
   }
 
-  /**
-   * Verifica se o arquivo é um vídeo
-   */
   isVideo(): boolean {
     return this.mimeType?.startsWith('video/') ?? false;
   }

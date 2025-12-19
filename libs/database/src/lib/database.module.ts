@@ -9,7 +9,7 @@ export class DatabaseModule {
   static forRoot(): DynamicModule {
     return {
       module: DatabaseModule,
-      global: true,  // ← IMPORTANTE: tornar global!
+      global: true,
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
@@ -21,7 +21,7 @@ export class DatabaseModule {
         }),
       ],
       providers: [DatabaseService],
-      exports: [DatabaseService],  // ← REMOVER MikroOrmModule daqui!
+      exports: [DatabaseService],
     };
   }
 }

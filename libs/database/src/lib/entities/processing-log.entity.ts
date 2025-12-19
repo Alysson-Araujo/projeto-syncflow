@@ -26,7 +26,6 @@ export class ProcessingLog {
     Object.assign(this, init);
   }
 
-  // Método utilitário para criar logs de erro
   static createErrorLog(message: string, error: any, file: File): ProcessingLog {
     return new ProcessingLog({
       message,
@@ -39,7 +38,6 @@ export class ProcessingLog {
     });
   }
 
-  // Método para logs de processo
   static createProcessLog(message: string, file: File, additionalDetails?: any): ProcessingLog {
     return new ProcessingLog({
       message,
